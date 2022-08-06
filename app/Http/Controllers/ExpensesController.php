@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ExpenseRequest;
 use App\Models\Expense;
+use Illuminate\Support\Facades\DB;
 
 class ExpensesController extends Controller
 {
@@ -16,12 +17,12 @@ class ExpensesController extends Controller
     {
         $date = new \DateTimeImmutable($request->data);
 
-        $expense = $this->expenseExist($request->descricao, $date->format('Y-m'));
+        $expense = $this->existingExpense($request->descricao, $date);
         
         if (!is_null($expense)) {
             return response()->json([
                 'message' => "A despesa '{$request->descricao}' já foi informada para este mês"
-            ]);
+            ], 409);
         }
 
         return response()->json(Expense::create([
@@ -46,15 +47,12 @@ class ExpensesController extends Controller
     {
         $date = new \DateTimeImmutable($request->data);
 
-        $description = Expense::where('descricao', $request->descricao)
-                                ->where('data', 'like', $date->format('Y-m') . '%')
-                                ->where('id', '<>', $expense->id)
-                                ->first();
-        
+        $description = $this->existingExpense($request->descricao, $date, $expense->id);
+
         if (!is_null($description)) {
             return response()->json([
                 'message' => "A despesa '{$request->descricao}' já foi informada para o mês"
-            ]);
+            ], 409);
         }
 
         $expense->fill([
@@ -74,10 +72,15 @@ class ExpensesController extends Controller
         return response()->noContent();
     }
 
-    private function expenseExist(string $description, string $date): ?Expense
+    private function existingExpense(string $description, \DateTimeInterface $date, int $id = 0)
     {
-        return Expense::where('descricao', $description)
-                        ->where('data', 'like', $date . '%')
-                        ->first();
+        $result = DB::table('despesas')
+                    ->where('descricao', $description)
+                    ->where('id', '<>', $id)
+                    ->whereMonth('data', '=', $date->format('m'))
+                    ->whereYear('data', '=', $date->format('Y'))
+                    ->value('descricao');
+
+        return $result;
     }
 }

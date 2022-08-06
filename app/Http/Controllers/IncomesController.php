@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\IncomeRequest;
 use App\Models\Income;
+use Illuminate\Support\Facades\DB;
 
 class IncomesController extends Controller
 {
@@ -16,12 +17,12 @@ class IncomesController extends Controller
     {
         $date = new \DateTimeImmutable($request->data);
 
-        $income = $this->incomeExist($request->descricao, $date->format('Y-m'));
+        $description = $this->existingIncome($request->descricao, $date);
         
-        if (!is_null($income)) {
+        if (!is_null($description)) {
             return response()->json([
                 'message' => "A receita '{$request->descricao}' já foi informada para este mês"
-            ]);
+            ], 409);
         }
 
         return response()->json(Income::create([
@@ -46,15 +47,12 @@ class IncomesController extends Controller
     {
         $date = new \DateTimeImmutable($request->data);
 
-        $description = Income::where('descricao', $request->descricao)
-                                ->where('data', 'like', $date->format('Y-m') . '%')
-                                ->where('id', '<>', $income->id)
-                                ->first();
-        
+        $description = $this->existingIncome($request->descricao, $date, $income->id);
+
         if (!is_null($description)) {
             return response()->json([
                 'message' => "A receita '{$request->descricao}' já foi informada para o mês"
-            ]);
+            ], 409);
         }
 
         $income->fill([
@@ -74,10 +72,15 @@ class IncomesController extends Controller
         return response()->noContent();
     }
 
-    private function incomeExist(string $description, string $date): ?Income
+    private function existingIncome(string $description, \DateTimeInterface $date, int $id = 0)
     {
-        return Income::where('descricao', $description)
-                        ->where('data', 'like', $date . '%')
-                        ->first();
+        $result = DB::table('receitas')
+                    ->where('descricao', $description)
+                    ->where('id', '<>', $id)
+                    ->whereMonth('data', '=', $date->format('m'))
+                    ->whereYear('data', '=', $date->format('Y'))
+                    ->value('descricao');
+
+        return $result;
     }
 }
