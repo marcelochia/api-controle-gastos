@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class IncomeRequest extends FormRequest
 {
@@ -39,5 +42,11 @@ class IncomeRequest extends FormRequest
             'data.required' => 'A data é obrigatória',
             'data.date' => 'A data está em formato inválido'
         ];
+    }
+
+    protected function failedValidation(Validator $validator)
+    {
+        $response = new Response(['error' => $validator->errors()->all()], 422);
+        throw new ValidationException($validator, $response);
     }
 }
