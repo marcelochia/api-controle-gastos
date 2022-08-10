@@ -4,13 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\IncomeRequest;
 use App\Models\Income;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class IncomesController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Income::all());
+        $incomes = Income::where('descricao', 'like', '%'.$request->query('descricao').'%')
+                        ->get();
+
+        if (count($incomes) === 0) {
+            return response()->noContent();
+        }
+
+        return response()->json($incomes);
     }
 
     public function store(IncomeRequest $request)
