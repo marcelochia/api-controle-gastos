@@ -11,6 +11,12 @@ class Expense extends Model
     protected $fillable = [
         'descricao',
         'valor',
-        'data'
+        'data',
+        'categoria_id'
     ];
+
+    public function categoria()
+    {
+        return $this->hasone(Category::class, 'id', 'categoria_id');
+    }
 }

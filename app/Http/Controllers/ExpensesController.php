@@ -10,7 +10,8 @@ class ExpensesController extends Controller
 {
     public function index()
     {
-        return response()->json(Expense::all());
+        $expenses = Expense::with('categoria')->get();
+        return response()->json($expenses);
     }
 
     public function store(ExpenseRequest $request)
@@ -28,13 +29,14 @@ class ExpensesController extends Controller
         return response()->json(Expense::create([
             'descricao' => $request->descricao,
             'valor' => $request->valor,
-            'data' => $date->format('Y-m-d')
+            'data' => $date->format('Y-m-d'),
+            'categoria_id' => $request->categoria_id ?? 8
         ]), 201);
     }
 
     public function show(int $id)
     {
-        $expense = Expense::find($id);
+        $expense = Expense::with('categoria')->find($id);
 
         if (is_null($expense)) {
             return response()->noContent();
@@ -58,7 +60,8 @@ class ExpensesController extends Controller
         $expense->fill([
             'descricao' => $request->descricao,
             'valor' => $request->valor,
-            'data' => $date->format('Y-m-d')
+            'data' => $date->format('Y-m-d'),
+            'categoria_id' => $request->categoria_id ?? 8
         ]);
         $expense->save();
 
