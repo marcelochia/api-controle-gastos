@@ -4,13 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ExpenseRequest;
 use App\Models\Expense;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ExpensesController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $expenses = Expense::with('categoria')->get();
+        $expenses = Expense::with('categoria')
+                            ->where('descricao', 'like', '%'.$request->query('descricao').'%')
+                            ->get();
+
+        if (count($expenses) === 0) {
+            return response()->noContent();
+        }
+
         return response()->json($expenses);
     }
 
