@@ -21,6 +21,19 @@ class IncomesController extends Controller
         return response()->json($incomes);
     }
 
+    public function listByMonth(string $year, string $month)
+    {
+        $incomes = Income::whereYear('data', $year)
+                        ->whereMonth('data', $month)
+                        ->get();
+
+        if (count($incomes) === 0) {
+            return response()->noContent();
+        }
+
+        return response()->json($incomes);
+    }
+
     public function store(IncomeRequest $request)
     {
         $date = new \DateTimeImmutable($request->data);

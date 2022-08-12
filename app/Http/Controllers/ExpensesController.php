@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ExpenseRequest;
+use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,8 +12,22 @@ class ExpensesController extends Controller
 {
     public function index(Request $request)
     {
-        $expenses = Expense::with('categoria')
-                            ->where('descricao', 'like', '%'.$request->query('descricao').'%')
+        $expenseModel = Expense::where('descricao', 'like', '%'.$request->query('descricao').'%')
+                            ->get();
+
+        if (count($expenseModel) === 0) {
+            return response()->noContent();
+        }
+
+        $expenses = ExpenseResource::collection($expenseModel);
+
+        return response()->json($expenses);
+    }
+
+    public function listByMonth(string $year, string $month)
+    {
+        $expenses = Expense::whereYear('data', $year)
+                            ->whereMonth('data', $month)
                             ->get();
 
         if (count($expenses) === 0) {
@@ -26,29 +41,33 @@ class ExpensesController extends Controller
     {
         $date = new \DateTimeImmutable($request->data);
 
-        $expense = $this->existingExpense($request->descricao, $date);
+        $description = $this->existingExpense($request->descricao, $date);
         
-        if (!is_null($expense)) {
+        if (!is_null($description)) {
             return response()->json([
                 'message' => "A despesa '{$request->descricao}' já foi informada para este mês"
             ], 409);
         }
 
-        return response()->json(Expense::create([
+        $expense = Expense::create([
             'descricao' => $request->descricao,
             'valor' => $request->valor,
             'data' => $date->format('Y-m-d'),
             'categoria_id' => $request->categoria_id ?? 8
-        ]), 201);
+        ]);
+
+        return response()->json($expense, 201);
     }
 
     public function show(int $id)
     {
-        $expense = Expense::with('categoria')->find($id);
+        $expenseModel = Expense::find($id);
 
-        if (is_null($expense)) {
+        if (is_null($expenseModel)) {
             return response()->noContent();
         }
+
+        $expense = new ExpenseResource($expenseModel);
 
         return response()->json($expense);
     }

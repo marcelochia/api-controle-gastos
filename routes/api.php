@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ExpensesController;
 use App\Http\Controllers\IncomesController;
+use App\Http\Controllers\SummaryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,5 +21,17 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::apiResource('receitas', IncomesController::class)->names('income')->parameters(['receitas' => 'income']);
-Route::apiResource('despesas', ExpensesController::class)->names('expense')->parameters(['despesas' => 'expense']);
+Route::apiResource('receitas', IncomesController::class)
+    ->names('income')
+    ->parameters(['receitas' => 'income']);
+
+Route::get('/receitas/{year}/{month}', [IncomesController::class, 'listByMonth']);
+
+Route::apiResource('despesas', ExpensesController::class)
+    ->names('expense')
+    ->parameters(['despesas' => 'expense']);
+
+Route::get('/despesas/{year}/{month}', [ExpensesController::class, 'listByMonth']);
+
+Route::get('/resumo/{year}/{month}', [SummaryController::class, 'summary'])
+        ->whereNumber(['year', 'month']);
