@@ -49,12 +49,14 @@ class ExpensesController extends Controller
             ], 409);
         }
 
-        $expense = Expense::create([
+        $expenseModel = Expense::create([
             'descricao' => $request->descricao,
             'valor' => $request->valor,
             'data' => $date->format('Y-m-d'),
             'categoria_id' => $request->categoria_id ?? 8
         ]);
+
+        $expense = new ExpenseResource($expenseModel);
 
         return response()->json($expense, 201);
     }
