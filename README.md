@@ -1,3 +1,5 @@
+![Laravel workflow](https://github.com/marcelochia/api-controle-gastos/actions/workflows/laravel.yml/badge.svg)
+
 # API de controle de gastos
 
 ## O projeto (em desenvolvimento)
